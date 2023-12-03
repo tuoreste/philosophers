@@ -13,7 +13,6 @@ This project simulates a classic problem known as the "Dining Philosophers Probl
   - [Implementation Details](#implementation-details)
   - [How to Run](#how-to-run)
   - [Contributing](#contributing)
-  - [License](#license)
 
 ## Rules of the Simulation
 
@@ -59,7 +58,3 @@ To run the simulation, follow these steps:
 ## Contributing
 
 Contributions are welcome! If you have improvements, bug fixes, or additional features to add, please open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE), allowing for open collaboration and distribution. See the LICENSE file for details.
