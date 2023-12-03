@@ -19,7 +19,7 @@ This project simulates a classic problem known as the "Dining Philosophers Probl
 
 1. **Philosophers and Table Setup:**
    - One or more philosophers sit at a round table.
-   - A large bowl of spaghetti is placed in the middle of the table.
+     (A large bowl of spaghetti is placed in the middle of the table)
 
 2. **Philosopher Activities:**
    - Philosophers alternate between eating, thinking, and sleeping.
