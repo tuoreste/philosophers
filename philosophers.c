@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:30:10 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/03 16:46:43 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/03 17:13:52 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ void	clean_args(int argc, char **argv)
 
 int	put_data(t_philo *phil, t_data *data, char **argv)
 {
-	t_data.num_of_philos = argv[1];
+	t_data->num_of_philos = ft_atoi(argv[1]);
 	t_data.death_clock = argv[2];
 	t_data.eat_clock = argv[3];
 	t_data.sleep_clock = argv[4];
