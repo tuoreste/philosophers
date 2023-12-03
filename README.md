@@ -50,7 +50,7 @@ The simulation can be implemented using various synchronization techniques, such
 
 ## Outcomes
 
-Solving the Dining Philosophers Problem has several outcomes in computer science:
+Solving the Dining Philosophers Problem has several outcomes:
 
 1. **Concurrency Management:**
    - Solutions to this problem often involve managing concurrency, providing insights into handling multiple processes or threads sharing resources.
