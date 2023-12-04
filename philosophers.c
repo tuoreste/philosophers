@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:30:10 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/04 01:11:17 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/04 16:34:55 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,21 +53,32 @@ void	clean_args(int argc, char **argv)
 
 int	mutex_initiated(t_philo *phil, t_data *data)
 {
-	pthread_mutex_t	mutex_philo;
+	int	i;
 
-	phil->forks = (t_philo *)malloc(sizeof(t_philo) * phil->num_of_philos);
-	if (!phil->forks)
+	data->forks = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t)
+			* phil->num_of_philos);
+	i = 0;
+	while (i < phil->num_of_philos)
+	{
+		if (pthread_mutex_init(&(data->forks[i]), NULL))
+			error_exit("Error of forks mutex");
+		i++;
+	}
+	if (pthread_mutex_init(&data->all_done_eating, NULL))
 		return (1);
-	if (pthread_mutex_init(&mutex_philo, phil->forks))
+	if (pthread_mutex_init(&data->is_dead, NULL))
 		return (1);
-	if (pthread_mutex_init(&mutex_philo, phil->print))
+	if (pthread_mutex_init(&data->lst_time_eating, NULL))
 		return (1);
-	if (pthread_mutex_init(&mutex_philo, phil->eating))
+	if (pthread_mutex_init(&data->eating, NULL))
 		return (1);
-	if (pthread_mutex_init(&mutex_philo, phil->done_eating))
+	if (pthread_mutex_init(&data->print, NULL))
 		return (1);
-	if (pthread_mutex_init(&mutex_philo, phil->forks))
-		return (1);
+}
+
+int	philosophers_initiated(t_philo *phil, t_data *data)
+{
+	
 }
 
 int	put_data(t_philo *phil, t_data *data, char **argv)
@@ -76,11 +87,13 @@ int	put_data(t_philo *phil, t_data *data, char **argv)
 	data->death_clock = ft_atoi(argv[2]);
 	data->eat_clock = ft_atoi(argv[3]);
 	data->sleep_clock = ft_atoi(argv[4]);
-	phil->time = 0;
-	phil->done_eating = 0;
-	phil->is_dead = 0;
+	data->all_done_eating = 0;
+	data->is_dead = 0;
+	//phil->time = manage time;
 	if (argv[5])
 		data->times_to_eat = ft_atoi(argv[5]);
+	else
+		data->times_to_eat = 0;
 	if (phil->num_of_philos < 1 || phil->num_of_philos > 200 || \
 		data->death_clock < 0 || data->eat_clock < 0 || data->sleep_clock < 0)
 		error_exit("Try again! input is invalid");

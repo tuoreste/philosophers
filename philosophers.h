@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:27:26 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/04 01:03:38 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/04 16:20:21 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,23 +22,22 @@ typedef struct s_philo
 	pthread_t	philosophe;
 	int			num_of_philos;
 	int			time;
-	int			forks;
-	int			eating;
-	int			done_eating;
-	int			is_dead;
-	int			lst_time_eating;
-	int			print;
 
 }		t_philo;
 
 typedef struct s_data
 {
-	t_philo		*philo;
-	int			death_clock;
-	int			eat_clock;
-	int			sleep_clock;
-
-	int			times_to_eat;
+	t_philo			*philo;
+	int				death_clock;
+	int				eat_clock;
+	int				sleep_clock;
+	int				times_to_eat;
+	pthread_mutex_t	*forks;
+	pthread_mutex_t	all_done_eating;
+	pthread_mutex_t	is_dead;
+	pthread_mutex_t	lst_time_eating;
+	pthread_mutex_t	eating;
+	pthread_mutex_t	print;
 
 }		t_data;
 
