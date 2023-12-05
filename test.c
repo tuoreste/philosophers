@@ -159,10 +159,10 @@ void	ft_putendl_fd(char *s, int fd)
 	write(fd, "\n", 1);
 }
 
-int	error_exit(char *str)
+void	error_exit(char *str)
 {
 	ft_putendl_fd(str, 2);
-	return (EXIT_FAILURE);
+	exit(0);
 }
 
 int	ft_isdigit(int c)
@@ -184,52 +184,68 @@ int	is_valid_number(char *str)
 	return (1);
 }
 
-
-int	clean_args(int argc, char **argv)
+char	**two_args(char **elems)
 {
-	int		i;
-	int		j;
+	int	k;
+
+	k = 0;
+	if (elems)
+	{
+		k = 0;
+		while (elems[k] != NULL)
+			k++;
+		if (k < 4 || k > 5)
+		{
+			free(elems);
+			error_exit("Error in number of inputs");
+		}
+	}
+	return (elems);
+}
+
+char	**five_or_six_args(int argc, char **argv, char **elems)
+{
+	int	i;
+
+	if (!elems)
+		return (0);
+	i = 1;
+	while (i < argc)
+	{
+		elems[i - 1] = philo_strdup(argv[i]);
+		if (!elems[i - 1])
+		{
+			free(elems);
+			return (NULL);
+		}
+		if (!is_valid_number(elems[i - 1]))
+		{
+			free(elems);
+			error_exit("Input contains an invalid character");
+		}
+		i++;
+	}
+	elems[i - 1] = NULL;
+	return (elems);
+}
+
+char	**clean_args(int argc, char **argv)
+{
 	char	**elems;
 
 	if (argc == 2)
+	{
 		elems = philo_split(argv[1], ' ');
+		two_args(elems);
+	}
 	else if (argc == 5 || argc == 6)
 	{
 		elems = (char **)malloc(sizeof(char *) * (argc + 1));
-		if (!elems)
-			return (0);
-		i = 1;
-		while (i < argc)
-		{
-			elems[i - 1] = philo_strdup(argv[i]);
-			if (!elems[i - 1])
-			{
-				free(elems);
-				return (0);
-			}
-			if (!is_valid_number(elems[i - 1]))
-			{
-				error_exit("Input contains invalid number");
-				free(elems);
-				return (0);
-			}
-			i++;
-		}
-		elems[i - 1] = NULL;
+		five_or_six_args(argc, argv, elems);
 	}
 	else
-		return (0);
-	i = 0;
-	while (elems[i] != NULL)
-	{
-		j = 0;
-		while (elems[i][j])
-			j++;
-		free(elems[i]);
-		i++;
-	}
-	free(elems);
-	return (1);
+		return (NULL);
+	return (elems);
 }
 
 int	main(int argc, char **argv)

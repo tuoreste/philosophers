@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:27:26 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/05 02:48:44 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/05 15:05:37 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,9 @@ typedef struct s_data
 }		t_data;
 
 //================philosophers.c==================
-int		error_exit(char *s);
+void		error_exit(char *s);
 void	timestamp(int time, int x, char *s);
-int		clean_args(int argc, char **argv);
+char	**clean_args(int argc, char **argv);
 
 //================philo_utils.c===================
 int		ft_atoi(const char *str);
