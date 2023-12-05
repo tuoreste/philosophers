@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:27:26 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/04 16:20:21 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/05 02:48:44 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,10 +19,11 @@
 
 typedef struct s_philo
 {
-	pthread_t	philosophe;
+	pthread_t	thread_1;
 	int			num_of_philos;
 	int			time;
-
+	int			id;
+	int			one_died;
 }		t_philo;
 
 typedef struct s_data
@@ -34,17 +35,16 @@ typedef struct s_data
 	int				times_to_eat;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	all_done_eating;
-	pthread_mutex_t	is_dead;
+	pthread_mutex_t	death_status;
 	pthread_mutex_t	lst_time_eating;
 	pthread_mutex_t	eating;
 	pthread_mutex_t	print;
-
 }		t_data;
 
 //================philosophers.c==================
 int		error_exit(char *s);
 void	timestamp(int time, int x, char *s);
-void	clean_args(int argc, char **argv);
+int		clean_args(int argc, char **argv);
 
 //================philo_utils.c===================
 int		ft_atoi(const char *str);
