@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:30:10 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/05 15:25:36 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/05 23:00:41 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -248,11 +248,15 @@ char	**clean_args(int argc, char **argv)
 	if (argc == 2)
 	{
 		elems = philo_split(argv[1], ' ');
+		if (!elems)
+			return (NULL);
 		two_args(elems);
 	}
 	else if (argc == 5 || argc == 6)
 	{
 		elems = (char **)malloc(sizeof(char *) * (argc + 1));
+		if (!elems)
+			return (NULL);
 		five_or_six_args(argc, argv, elems);
 	}
 	else
@@ -337,7 +341,6 @@ int	thread_initiated(t_philo *phil, t_data *data)
 	int	i;
 
 	i = 0;
-	phil->one_died = 0;
 	while (phil->one_died == 0)
 	{
 		phil->id = i;
@@ -348,15 +351,16 @@ int	thread_initiated(t_philo *phil, t_data *data)
 	}
 }
 
-int	put_data(t_philo *phil, t_data *data, char **argv)
+int	put_data(t_philo *phil, t_data *data, char **elems)
 {
-	phil->num_of_philos = ft_atoi(argv[1]);
-	data->death_clock = ft_atoi(argv[2]);
-	data->eat_clock = ft_atoi(argv[3]);
-	data->sleep_clock = ft_atoi(argv[4]);
+	phil->num_of_philos = ft_atoi(elems[0]);
+	data->death_clock = ft_atoi(elems[1]);
+	data->eat_clock = ft_atoi(elems[2]);
+	data->sleep_clock = ft_atoi(elems[3]);
+	phil->one_died = 0;
 	// phil->time = manage time;
-	if (argv[5])
-		data->times_to_eat = ft_atoi(argv[5]);
+	if (elems[4])
+		data->times_to_eat = ft_atoi(elems[4]);
 	else
 		data->times_to_eat = 0;
 	if (phil->num_of_philos < 1 || phil->num_of_philos > 200
@@ -367,7 +371,7 @@ int	put_data(t_philo *phil, t_data *data, char **argv)
 		error_exit("Error initilizing (mutex/threads of philos)");
 }
 
-int	lets_go(char **argv)
+int	lets_go(char **elems)
 {
 	t_philo	*phil;
 	t_data	*data;
@@ -378,17 +382,20 @@ int	lets_go(char **argv)
 	data = (t_data *)malloc(sizeof(t_data));
 	if (!data)
 		return (free(phil), 1);
-	put_data(&phil, &data, argv);
+	put_data(&phil, &data, elems);
 	// free_up() t_phil and t_data;
 }
 
 int	main(int argc, char **argv)
 {
+	char	**elems;
+
 	if (argc == 2 || argc == 5 || argc == 6)
-		clean_args(argc, argv);
+		elems = clean_args(argc, argv);
 	else
 		error_exit("Error in number of inputs");
-	lets_go(argv);
+	lets_go(elems);
+	//free(elems);
 	// num_philos = ft_atoi(argv[1]);
 	// pthread_create(&thread_1, NULL, &thread_exec, &phil);
 	// pthread_join(&thread_1, NULL);
