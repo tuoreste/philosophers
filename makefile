@@ -6,7 +6,7 @@
 #    By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/08 14:23:29 by otuyishi          #+#    #+#              #
-#    Updated: 2023/11/27 16:44:28 by otuyishi         ###   ########.fr        #
+#    Updated: 2023/12/08 17:26:57 by otuyishi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,10 +15,10 @@ NAME = philosophers
 
 # Compiler and flags
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -fsanitize=address -g
+CFLAGS = -Wall -Wextra -Werror -g
 
 # Source files
-SRCS = philosophers.c philo_utils.c
+SRCS = philosophers.c
 
 # Object files
 OBJS = $(SRCS:.c=.o)

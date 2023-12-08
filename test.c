@@ -193,7 +193,14 @@ char	**two_args(char **elems)
 	{
 		k = 0;
 		while (elems[k] != NULL)
+		{
+			if (!is_valid_number(elems[k - 1]))
+			{
+				free(elems);
+				error_exit("Input contains an invalid character");
+			}
 			k++;
+		}
 		if (k < 4 || k > 5)
 		{
 			free(elems);

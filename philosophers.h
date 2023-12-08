@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:27:26 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/05 16:39:10 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/08 17:55:21 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,29 +16,35 @@
 # include <stdlib.h>
 # include <unistd.h>
 # include <pthread.h>
+#include <sys/time.h>
 
 typedef struct s_philo
 {
-	pthread_t	thread_1;
-	int			num_of_philos;
-	int			time;
-	int			id;
-	int			one_died;
+	pthread_t		tid;
+	long long		last_eat;
+	int				time;
+	int				id;
+	int				n_eat;
+	struct s_data	*data;
+	pthread_mutex_t	*left_fork;
+	pthread_mutex_t	*right_fork;
+	pthread_mutex_t	eating_mutex;
+
 }		t_philo;
 
 typedef struct s_data
 {
-	t_philo			*philo;
+	pthread_mutex_t	print;
+	int				one_died;
+	long long		start_eating;
+	int				n_philos;
 	int				death_clock;
 	int				eat_clock;
 	int				sleep_clock;
-	int				times_to_eat;
-	pthread_mutex_t	*forks;
+	int				times_eaten;
+	struct s_philo	*philo;
 	pthread_mutex_t	all_done_eating;
 	pthread_mutex_t	death_status;
-	pthread_mutex_t	lst_time_eating;
-	pthread_mutex_t	eating;
-	pthread_mutex_t	print;
 }		t_data;
 
 //================philosophers.c==================
