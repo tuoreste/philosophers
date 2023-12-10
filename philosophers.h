@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:27:26 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/10 02:18:20 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/10 15:21:13 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,17 +35,13 @@ typedef struct s_philo
 typedef struct s_data
 {
 	pthread_mutex_t	print;
-	int				one_died;
 	long long		start_eating;
 	int				n_philos;
 	int				death_clock;
 	int				eat_clock;
 	int				sleep_clock;
 	int				times_eaten;
-	int				next_turn;
 	struct s_philo	*philo;
-	pthread_mutex_t	all_done_eating;
-	pthread_mutex_t	death_status;
 }		t_data;
 
 //================philosophers.c==================
