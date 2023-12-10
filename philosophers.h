@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:27:26 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/08 17:55:21 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/10 02:18:20 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ typedef struct s_data
 	int				eat_clock;
 	int				sleep_clock;
 	int				times_eaten;
+	int				next_turn;
 	struct s_philo	*philo;
 	pthread_mutex_t	all_done_eating;
 	pthread_mutex_t	death_status;
