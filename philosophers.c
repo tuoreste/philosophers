@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:30:10 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/10 17:18:22 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/10 20:00:55 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,7 +132,7 @@ static int	ft_number_of_words(char const *str, char c)
 	return (count);
 }
 
-static void	free_all(char **word)
+void	free_all(char **word)
 {
 	int	i;
 
@@ -145,7 +145,7 @@ static void	free_all(char **word)
 	free(word);
 }
 
-static int	ft_split_loop(char const *str, char c, char **word)
+int	ft_split_loop(char const *str, char c, char **word)
 {
 	int	iter;
 	int	len;
@@ -324,6 +324,13 @@ int	philo_atoi(const char *str)
 	return (the_integer * the_sign);
 }
 
+void	close_philo(t_data *data)
+{
+	free(&data->philo);
+	free(&data);
+	return ;
+}
+
 long long	current_time(void)
 {
 	struct timeval	current;
@@ -406,7 +413,6 @@ void	init_philos(t_data *data)
 	int				i;
 
 	each_philo(data);
-	i = 0;
 	data->start_eating = current_time();
 	i = 0;
 	while (i < data->n_philos)
@@ -426,13 +432,19 @@ void	init_philos(t_data *data)
 		pthread_join(data->philo[i++].tid, NULL);
 }
 
+int	supervise()
+{
+	//time taken to eat + sleep + think does not exceed time to die
+	//time taken to eat does not exceed time to die
+	//time taken to eat does not exceed time to die
+	//time taken to eat does not exceed time to die
+}
+
 void	lets_go(char **elems)
 {
 	t_data	*data;
 
 	data = philo_calloc(sizeof(t_data), 1);
-	if (!data)
-		return ;
 	data->n_philos = philo_atoi(elems[0]);
 	data->philo = philo_calloc(sizeof(t_philo), data->n_philos);
 	if (!data->philo)
@@ -445,6 +457,7 @@ void	lets_go(char **elems)
 	if (elems[4])
 		data->times_eaten = philo_atoi(elems[4]);
 	init_philos(data);
+	close_philo(data);
 }
 
 int	main(int argc, char **argv)
@@ -455,12 +468,9 @@ int	main(int argc, char **argv)
 	{
 		elems = clean_args(argc, argv);
 		lets_go(elems);
+		free(elems);
 	}
 	else
 		error_exit("Error in number of inputs");
-	// free(elems);
-	// num_philos = ft_atoi(argv[1]);
-	// pthread_create(&thread_1, NULL, &thread_exec, &phil);
-	// pthread_join(&thread_1, NULL);
 	return (0);
 }
