@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:30:10 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/10 20:00:55 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/17 05:39:40 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -229,7 +229,6 @@ char	**two_args(char **elems)
 	k = 0;
 	if (elems)
 	{
-		k = 0;
 		while (elems[k] != NULL)
 		{
 			if (!is_valid_number(elems[k - 1]))
@@ -347,6 +346,133 @@ void	print(t_philo *philo, char *msg)
 	pthread_mutex_unlock(&philo->data->print);
 }
 
+int	finishing_status(t_data *data)
+{
+	pthread_mutex_lock(&data->fini_status);
+	if (data->one_finished)
+	{
+		pthread_mutex_unlock(&data->fini_status);
+		return (1);
+	}
+	pthread_mutex_unlock(&data->fini_status);
+	return (0);
+}
+
+int	dying_status(t_data *data)
+{
+	pthread_mutex_lock(&data->fini_status);
+	if (data->count_dead)
+	{
+		pthread_mutex_unlock(&data->fini_status);
+		return (1);
+	}
+	pthread_mutex_unlock(&data->fini_status);
+	return (0);
+}
+
+void	*exiting(t_data *data)
+{
+	int	i;
+
+	i = 0;
+	while (i < data->n_philos)
+		pthread_mutex_unlock(data->philo[i++].right_fork);
+	return (NULL);
+}
+
+int	end_eating(t_data *data)
+{
+	int	i;
+	int	n;
+
+	i = 0;
+	if (data->times_eaten)
+		return (0);
+	n = 0;
+	while (i < data->n_philos)
+	{
+		pthread_mutex_lock(&(data->philo[i].eating_mutex));
+		if (data->times_eaten <= data->philo[i].n_eat)
+			n++;
+		pthread_mutex_unlock(&(data->philo[i].eating_mutex));
+		i++;
+	}
+	if (i <= n)
+		return (1);
+	return (0);
+}
+
+void	*supervise(void *args)
+{
+	int		i;
+	t_data	*data;
+
+	i = 0;
+	data = (t_data *)args;
+	while (!finishing_status(data) && !dying_status(data))
+	{
+		while (i < data->n_philos)
+		{
+			pthread_mutex_lock(&data->philo[i].eating_mutex);
+			if ((current_time() - data->philo[i].last_eat) >= data->death_clock)
+			{
+				pthread_mutex_unlock(&data->philo[i].eating_mutex);
+				pthread_mutex_lock(&data->one_dead);
+				print(&data->philo[i], " died");
+				data->count_dead = 1;
+				pthread_mutex_unlock(&data->one_dead);
+				break ;
+			}
+			pthread_mutex_unlock(&data->philo[i++].eating_mutex);
+			if (end_eating(data))
+			{
+				pthread_mutex_lock(&data->fini_status);
+				data->one_finished = 1;
+				pthread_mutex_unlock(&data->fini_status);
+			}
+		}
+	}
+	return (exiting(data));
+}
+
+// void	subvise(t_data *data)
+// {
+// 	int	i;
+
+// 	i = 0;
+// 	while (i < data->n_philos)
+// 	{
+// 		pthread_mutex_lock(&data->philo[i].eating_mutex);
+// 		if (!end_eating(data) && ((current_time() - data->philo[i].last_eat) >= data->death_clock))
+// 		{
+// 			pthread_mutex_unlock(&data->philo[i].eating_mutex);
+// 			pthread_mutex_lock(&data->one_dead);
+// 			print(&data->philo[i], " died");
+// 			data->count_dead = 1;
+// 			pthread_mutex_unlock(&data->one_dead);
+// 			return ;
+// 		}
+// 		pthread_mutex_unlock(&data->philo[i].eating_mutex);
+// 		i++;
+// 	}
+// 	if (end_eating(data))
+// 	{
+// 		pthread_mutex_lock(&data->fini_status);
+// 		data->one_finished = 1;
+// 		pthread_mutex_unlock(&data->fini_status);
+// 	}
+// }
+
+// void	*supervise(void *args)
+// {
+// 	t_data	*data;
+
+// 	data = (t_data *)args;
+// 	while (!finishing_status(data) && !dying_status(data))
+// 		subvise(data);
+// 	return (exiting(data));
+// }
+
 void	taking_fork(t_philo *philo)
 {
 	pthread_mutex_lock(philo->right_fork);
@@ -355,36 +481,74 @@ void	taking_fork(t_philo *philo)
 	print(philo, "has taken a fork");
 }
 
-void	eating(t_philo *philo)
+int	scan(t_philo *philo)
 {
-	print(philo, " is eating");
-	philo->n_eat++;
-	pthread_mutex_lock(&philo->eating_mutex);
-	philo->last_eat = current_time();
-	pthread_mutex_unlock(&philo->eating_mutex);
-	usleep(philo->data->eat_clock * 1000);
-	pthread_mutex_unlock(philo->left_fork);
-	pthread_mutex_unlock(philo->right_fork);
-	print(philo, " is sleeping");
-	usleep(philo->data->sleep_clock * 1000);
-	print(philo, " is thinking");
+	if (!philo->data->times_eaten)
+		return (0);
+	pthread_mutex_lock(&(philo->eating_mutex));
+	if (philo->n_eat == philo->data->times_eaten)
+	{
+		pthread_mutex_unlock(&(philo->eating_mutex));
+		return (1);
+	}
+	pthread_mutex_unlock(&(philo->eating_mutex));
+	return (0);
 }
+
+void	eat_sleep_think(t_philo *philo)
+{
+	if (!scan(philo))
+	{
+		print(philo, " is eating");
+		philo->n_eat++;
+		pthread_mutex_lock(&philo->eating_mutex);
+		philo->last_eat = current_time();
+		pthread_mutex_unlock(&philo->eating_mutex);
+		usleep(philo->data->eat_clock * 1000);
+		pthread_mutex_unlock(philo->left_fork);
+		pthread_mutex_unlock(philo->right_fork);
+		print(philo, " is sleeping");
+		usleep(philo->data->sleep_clock * 1000);
+		print(philo, " is thinking");
+	}
+}
+/*
+THE ROUTIN
+1. Declares iteration and struct philos
+2. Casts to t_philo all void args collected through create thread for the routin
+3. If the n_philos is even, then the
+*/
 
 void	*routin(void *args)
 {
+	int		i;
 	t_philo	*philo;
 
 	philo = (t_philo *)args;
 	if ((philo->id + 1) % 2)
 		usleep(philo->data->eat_clock * 1000 / 2);
+	i = 0;
 	while (1)
 	{
 		taking_fork(philo);
-		eating(philo);
+		eat_sleep_think(philo);
 	}
 	return (NULL);
 }
 
+/*
+EACH_PHILO
+1. Initiates i(iteration) and array to track the table
+2. Allocate memo for the array based on the number of the philos
+3. while iteration has not reached the last philos do the following
+   3.1 philo i receives id from 1 up to number of philos
+   3.2 num of eats of each philos initiated at 0
+   3.3 each philo receives data vars in the data structure
+   3.4 each philo allocates a fork on their right on the table
+   3.5 initiates mutex to each philos array position
+   3.6 initiates mutex for eating for each philo
+   3.7 give access to left fork for the last on table depending on even or odd
+*/
 void	each_philo(t_data *data)
 {
 	int				i;
@@ -408,15 +572,57 @@ void	each_philo(t_data *data)
 	}
 }
 
+void	*one_routine(void *args)
+{
+	t_philo	*philo;
+
+	philo = (t_philo *)args;
+	return ((void *)0);
+}
+
+void	one_philo(t_data *data)
+{
+	if (pthread_create(&data->philo[0].tid, NULL, &one_routine,
+			&data->philo[1]))
+		error_exit("thread creation error");
+	print(&data->philo[0], "has taken fork");
+	usleep(data->eat_clock * 1000 / 2);
+	print(&data->philo[0], "died");
+	data->philo[0].data->count_dead = 1;
+	return ;
+}
+
+/*
+FUNCTION INIT_PHILOS
+1. Declares var i (for iterations) & thread named check
+2. Loop thru for as long as the num of philos and do the following
+		2.1. pass to philo num[i] the var last_eat as current time we are
+		2.2. now create a thread though which we are going to call the routin
+				but also tracking each philos id for differenciation of each of
+				of the on the table.
+				2.2.1
+				In case the creation of thread fails, protect to immediately
+				free the rest of the allocated memory and exit with an error.
+		2.3. Keep increamenting the loop
+3. create a thread to call for supervision over the on going calls
+4. join the thread's infos
+5. check the joining thread status
+*/
 void	init_philos(t_data *data)
 {
-	int				i;
+	int			i;
+	pthread_t	check;
 
 	each_philo(data);
 	data->start_eating = current_time();
 	i = 0;
 	while (i < data->n_philos)
 	{
+		if (data->n_philos == 1)
+		{
+			one_philo(data);
+			return ;
+		}
 		data->philo[i].last_eat = current_time();
 		if (pthread_create(&data->philo[i].tid, NULL, routin,
 				&(data->philo[i])))
@@ -427,18 +633,26 @@ void	init_philos(t_data *data)
 		}
 		i++;
 	}
+	pthread_create(&check, NULL, supervise, data);
 	i = 0;
 	while (i < data->n_philos)
 		pthread_join(data->philo[i++].tid, NULL);
+	pthread_join(check, NULL);
 }
 
-int	supervise()
-{
-	//time taken to eat + sleep + think does not exceed time to die
-	//time taken to eat does not exceed time to die
-	//time taken to eat does not exceed time to die
-	//time taken to eat does not exceed time to die
-}
+/*
+FUNCTION LETS_GO
+1. Declares data struct containing the var we will need
+2. Allocates memory to the whole data struct
+3. Data var n_philos is given its arg as a num(in this case num of philos)
+4. Through data struct we allocate memo of philo struct based on num of philos
+5. protected in case the memo allocation does not work since data is allocated
+   as well we immediately free data right before we return
+6. Feed args values to vars death,eat,sleep clocks and times eaten as zero in
+   in case the arg has not been given.
+7. Initiate thread mutex for printing
+8. func call init_philos with pass of current data struct records
+*/
 
 void	lets_go(char **elems)
 {
@@ -449,16 +663,26 @@ void	lets_go(char **elems)
 	data->philo = philo_calloc(sizeof(t_philo), data->n_philos);
 	if (!data->philo)
 		return (free(data));
-	pthread_mutex_init(&data->print, NULL);
 	data->death_clock = philo_atoi(elems[1]);
 	data->eat_clock = philo_atoi(elems[2]);
 	data->sleep_clock = philo_atoi(elems[3]);
 	data->times_eaten = 0;
 	if (elems[4])
 		data->times_eaten = philo_atoi(elems[4]);
+	pthread_mutex_init(&data->print, NULL);
 	init_philos(data);
-	close_philo(data);
 }
+
+/*
+MAIN
+1.Declares an array called elems that will contain all arguments
+2.
+  2.1 Checks if arguments are either 2,5 or 6
+		2.1.1 the array elems gets the cleaned arguments(eligible args)
+		2.1.2 lets_go function takes the array to start the war
+		2.1.3 Ofcourse we free the memory we have been using of elems.
+  2.2 the number of arguments given are more or not enough so returns an error
+*/
 
 int	main(int argc, char **argv)
 {
