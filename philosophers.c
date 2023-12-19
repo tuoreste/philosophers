@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:30:10 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/17 05:39:40 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/19 04:04:31 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,25 @@ void	ft_bzero(void *s, size_t n)
 		ptr++;
 		n--;
 	}
+}
+
+size_t	get_current_time(void)
+{
+	struct timeval	time;
+
+	if (gettimeofday(&time, NULL) == -1)
+		write(2, "gettimeofday() error\n", 22);
+	return (time.tv_sec * 1000 + time.tv_usec / 1000);
+}
+
+int	ft_usleep(size_t milliseconds)
+{
+	size_t	start;
+
+	start = get_current_time();
+	while ((get_current_time() - start) < milliseconds)
+		usleep(500);
+	return (0);
 }
 
 void	*philo_calloc(size_t count, size_t size)
@@ -188,19 +207,10 @@ char	**philo_split(char *str, char c)
 	return (word);
 }
 
-void	ft_putendl_fd(char *s, int fd)
+int	error_return(char *str)
 {
-	if (!s)
-		return ;
-	while (*s)
-		write(fd, s++, 1);
-	write(fd, "\n", 1);
-}
-
-void	error_exit(char *str)
-{
-	ft_putendl_fd(str, 2);
-	exit(0);
+	printf(RED "Error:\n%s!\n" RESET, str);
+	return (0);
 }
 
 int	ft_isdigit(int c)
@@ -234,14 +244,16 @@ char	**two_args(char **elems)
 			if (!is_valid_number(elems[k - 1]))
 			{
 				free(elems);
-				error_exit("Input contains an invalid character");
+				error_return("Input contains an invalid character");
+				return (NULL);
 			}
 			k++;
 		}
 		if (k < 4 || k > 5)
 		{
 			free(elems);
-			error_exit("Error in number of inputs");
+			error_return("In number of inputs");
+			return (NULL);
 		}
 	}
 	return (elems);
@@ -265,7 +277,8 @@ char	**five_or_six_args(int argc, char **argv, char **elems)
 		if (!is_valid_number(elems[i - 1]))
 		{
 			free(elems);
-			error_exit("Input contains an invalid character");
+			error_return("Input contains an invalid character");
+			return (NULL);
 		}
 		i++;
 	}
@@ -282,12 +295,17 @@ char	**clean_args(int argc, char **argv)
 		elems = philo_split(argv[1], ' ');
 		if (!elems)
 			return (NULL);
-		two_args(elems);
+		if (!two_args(elems))
+		{
+			free(elems);
+			return (NULL);
+		}
 	}
 	else if (argc == 5 || argc == 6)
 	{
 		elems = (char **)philo_calloc(sizeof(char *), argc + 1);
-		five_or_six_args(argc, argv, elems);
+		if (!five_or_six_args(argc, argv, elems))
+			return (NULL);
 	}
 	else
 		return (NULL);
@@ -338,36 +356,37 @@ long long	current_time(void)
 	return (current.tv_sec * 1000 + current.tv_usec / 1000);
 }
 
-void	print(t_philo *philo, char *msg)
+int	dying_status(t_data *data)
 {
-	pthread_mutex_lock(&(philo->data->print));
-	printf("%lld %d %s\n", current_time() - philo->data->start_eating,
-		philo->id, msg);
-	pthread_mutex_unlock(&philo->data->print);
+	pthread_mutex_lock(&data->one_dead);
+	if (data->count_dead)
+	{
+		pthread_mutex_unlock(&data->one_dead);
+		return (1);
+	}
+	pthread_mutex_unlock(&data->one_dead);
+	return (0);
 }
 
 int	finishing_status(t_data *data)
 {
-	pthread_mutex_lock(&data->fini_status);
+	pthread_mutex_lock(&(data->fini_status));
 	if (data->one_finished)
 	{
-		pthread_mutex_unlock(&data->fini_status);
+		pthread_mutex_unlock(&(data->fini_status));
 		return (1);
 	}
-	pthread_mutex_unlock(&data->fini_status);
+	pthread_mutex_unlock(&(data->fini_status));
 	return (0);
 }
 
-int	dying_status(t_data *data)
+void	print(t_philo *philo, char *msg)
 {
-	pthread_mutex_lock(&data->fini_status);
-	if (data->count_dead)
-	{
-		pthread_mutex_unlock(&data->fini_status);
-		return (1);
-	}
-	pthread_mutex_unlock(&data->fini_status);
-	return (0);
+	pthread_mutex_lock(&(philo->data->print));
+	if (!dying_status(philo->data) && !finishing_status(philo->data))
+		printf("%lld %d %s\n", current_time() - philo->data->start_eating,
+			philo->id, msg);
+	pthread_mutex_unlock(&philo->data->print);
 }
 
 void	*exiting(t_data *data)
@@ -386,20 +405,29 @@ int	end_eating(t_data *data)
 	int	n;
 
 	i = 0;
-	if (data->times_eaten)
-		return (0);
 	n = 0;
+	if (!data->times_eaten)
+	{
+		return (0);
+	}
 	while (i < data->n_philos)
 	{
 		pthread_mutex_lock(&(data->philo[i].eating_mutex));
-		if (data->times_eaten <= data->philo[i].n_eat)
+		if (data->philo[i].n_eat >= data->times_eaten)
 			n++;
 		pthread_mutex_unlock(&(data->philo[i].eating_mutex));
 		i++;
 	}
-	if (i <= n)
+	if (data->n_philos == n)
 		return (1);
 	return (0);
+}
+
+void	subvise(t_data *data)
+{
+	pthread_mutex_lock(&data->fini_status);
+	data->one_finished = 1;
+	pthread_mutex_unlock(&data->fini_status);
 }
 
 void	*supervise(void *args)
@@ -407,10 +435,10 @@ void	*supervise(void *args)
 	int		i;
 	t_data	*data;
 
-	i = 0;
 	data = (t_data *)args;
 	while (!finishing_status(data) && !dying_status(data))
 	{
+		i = 0;
 		while (i < data->n_philos)
 		{
 			pthread_mutex_lock(&data->philo[i].eating_mutex);
@@ -418,60 +446,25 @@ void	*supervise(void *args)
 			{
 				pthread_mutex_unlock(&data->philo[i].eating_mutex);
 				pthread_mutex_lock(&data->one_dead);
-				print(&data->philo[i], " died");
+				printf("%lld %d %s\n", current_time() - data->start_eating,
+					data->philo[i].id, " died");
 				data->count_dead = 1;
 				pthread_mutex_unlock(&data->one_dead);
 				break ;
 			}
 			pthread_mutex_unlock(&data->philo[i++].eating_mutex);
-			if (end_eating(data))
-			{
-				pthread_mutex_lock(&data->fini_status);
-				data->one_finished = 1;
-				pthread_mutex_unlock(&data->fini_status);
-			}
+		}
+		if (end_eating(data))
+		{
+			subvise(data);
+			printf(MAGENTA "%lld %s\n", current_time() - data->start_eating,
+				"DONE!!" RESET);
+			break ;
 		}
 	}
-	return (exiting(data));
+	exiting(data);
+	return (data);
 }
-
-// void	subvise(t_data *data)
-// {
-// 	int	i;
-
-// 	i = 0;
-// 	while (i < data->n_philos)
-// 	{
-// 		pthread_mutex_lock(&data->philo[i].eating_mutex);
-// 		if (!end_eating(data) && ((current_time() - data->philo[i].last_eat) >= data->death_clock))
-// 		{
-// 			pthread_mutex_unlock(&data->philo[i].eating_mutex);
-// 			pthread_mutex_lock(&data->one_dead);
-// 			print(&data->philo[i], " died");
-// 			data->count_dead = 1;
-// 			pthread_mutex_unlock(&data->one_dead);
-// 			return ;
-// 		}
-// 		pthread_mutex_unlock(&data->philo[i].eating_mutex);
-// 		i++;
-// 	}
-// 	if (end_eating(data))
-// 	{
-// 		pthread_mutex_lock(&data->fini_status);
-// 		data->one_finished = 1;
-// 		pthread_mutex_unlock(&data->fini_status);
-// 	}
-// }
-
-// void	*supervise(void *args)
-// {
-// 	t_data	*data;
-
-// 	data = (t_data *)args;
-// 	while (!finishing_status(data) && !dying_status(data))
-// 		subvise(data);
-// 	return (exiting(data));
-// }
 
 void	taking_fork(t_philo *philo)
 {
@@ -497,47 +490,42 @@ int	scan(t_philo *philo)
 
 void	eat_sleep_think(t_philo *philo)
 {
-	if (!scan(philo))
-	{
-		print(philo, " is eating");
-		philo->n_eat++;
-		pthread_mutex_lock(&philo->eating_mutex);
-		philo->last_eat = current_time();
-		pthread_mutex_unlock(&philo->eating_mutex);
-		usleep(philo->data->eat_clock * 1000);
-		pthread_mutex_unlock(philo->left_fork);
-		pthread_mutex_unlock(philo->right_fork);
-		print(philo, " is sleeping");
-		usleep(philo->data->sleep_clock * 1000);
-		print(philo, " is thinking");
-	}
+	print(philo, " is eating");
+	philo->n_eat++;
+	pthread_mutex_lock(&philo->eating_mutex);
+	philo->last_eat = current_time();
+	pthread_mutex_unlock(&philo->eating_mutex);
+	ft_usleep(philo->data->eat_clock);
+	pthread_mutex_unlock(philo->left_fork);
+	pthread_mutex_unlock(philo->right_fork);
+	print(philo, " is sleeping");
+	ft_usleep(philo->data->sleep_clock);
+	print(philo, " is thinking");
 }
+
 /*
-THE ROUTIN
+FUNC THE ROUTIN
 1. Declares iteration and struct philos
 2. Casts to t_philo all void args collected through create thread for the routin
-3. If the n_philos is even, then the
+3.
 */
-
 void	*routin(void *args)
 {
-	int		i;
 	t_philo	*philo;
 
 	philo = (t_philo *)args;
 	if ((philo->id + 1) % 2)
-		usleep(philo->data->eat_clock * 1000 / 2);
-	i = 0;
-	while (1)
+		ft_usleep(philo->data->eat_clock);
+	while (!dying_status(philo->data) && !finishing_status(philo->data))
 	{
 		taking_fork(philo);
 		eat_sleep_think(philo);
 	}
-	return (NULL);
+	return (philo);
 }
 
 /*
-EACH_PHILO
+FUNC EACH_PHILO
 1. Initiates i(iteration) and array to track the table
 2. Allocate memo for the array based on the number of the philos
 3. while iteration has not reached the last philos do the following
@@ -572,6 +560,11 @@ void	each_philo(t_data *data)
 	}
 }
 
+/*
+FUNC ONE_ROUTINE
+1. Takes args of the routine
+2. func returns nothing
+*/
 void	*one_routine(void *args)
 {
 	t_philo	*philo;
@@ -580,13 +573,24 @@ void	*one_routine(void *args)
 	return ((void *)0);
 }
 
+/*
+FUNC ONE_PHILO
+1. Creates a simple thread for a routine of one philo of which if not its error
+2. Prints out him taking a fork
+3. Sleeps
+4. Prints his death
+5. Announces his death to data struct thru increamenting the count_dead
+*/
 void	one_philo(t_data *data)
 {
 	if (pthread_create(&data->philo[0].tid, NULL, &one_routine,
 			&data->philo[1]))
-		error_exit("thread creation error");
+	{
+		error_return("thread creation error");
+		return ;
+	}
 	print(&data->philo[0], "has taken fork");
-	usleep(data->eat_clock * 1000 / 2);
+	ft_usleep(data->eat_clock);
 	print(&data->philo[0], "died");
 	data->philo[0].data->count_dead = 1;
 	return ;
@@ -610,10 +614,10 @@ FUNCTION INIT_PHILOS
 */
 void	init_philos(t_data *data)
 {
-	int			i;
-	pthread_t	check;
+	int	i;
 
 	each_philo(data);
+	pthread_create(&data->check, 0, supervise, data);
 	data->start_eating = current_time();
 	i = 0;
 	while (i < data->n_philos)
@@ -624,20 +628,17 @@ void	init_philos(t_data *data)
 			return ;
 		}
 		data->philo[i].last_eat = current_time();
-		if (pthread_create(&data->philo[i].tid, NULL, routin,
-				&(data->philo[i])))
+		if (pthread_create(&data->philo[i].tid, 0, routin, &(data->philo[i])))
 		{
-			free(data->philo);
-			free(data);
-			error_exit("thread creation error");
+			error_return("First thread creation failed");
+			return ;
 		}
 		i++;
 	}
-	pthread_create(&check, NULL, supervise, data);
+	pthread_join(data->check, 0);
 	i = 0;
 	while (i < data->n_philos)
-		pthread_join(data->philo[i++].tid, NULL);
-	pthread_join(check, NULL);
+		pthread_join(data->philo[i++].tid, 0);
 }
 
 /*
@@ -653,7 +654,6 @@ FUNCTION LETS_GO
 7. Initiate thread mutex for printing
 8. func call init_philos with pass of current data struct records
 */
-
 void	lets_go(char **elems)
 {
 	t_data	*data;
@@ -670,6 +670,9 @@ void	lets_go(char **elems)
 	if (elems[4])
 		data->times_eaten = philo_atoi(elems[4]);
 	pthread_mutex_init(&data->print, NULL);
+	pthread_mutex_init(&data->fini_status, NULL);
+	pthread_mutex_init(&data->one_dead, NULL);
+	pthread_mutex_init(&data->one_dead, NULL);
 	init_philos(data);
 }
 
@@ -683,7 +686,6 @@ MAIN
 		2.1.3 Ofcourse we free the memory we have been using of elems.
   2.2 the number of arguments given are more or not enough so returns an error
 */
-
 int	main(int argc, char **argv)
 {
 	char	**elems;
@@ -691,10 +693,15 @@ int	main(int argc, char **argv)
 	if (argc == 2 || argc == 5 || argc == 6)
 	{
 		elems = clean_args(argc, argv);
-		lets_go(elems);
-		free(elems);
+		if (!elems)
+			return (1);
+		else
+		{
+			lets_go(elems);
+			free(elems);
+		}
 	}
 	else
-		error_exit("Error in number of inputs");
+		error_return("In number of inputs");
 	return (0);
 }
