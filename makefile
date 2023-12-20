@@ -6,7 +6,7 @@
 #    By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/08 14:23:29 by otuyishi          #+#    #+#              #
-#    Updated: 2023/12/08 17:26:57 by otuyishi         ###   ########.fr        #
+#    Updated: 2023/12/20 01:22:04 by otuyishi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,10 +15,19 @@ NAME = philosophers
 
 # Compiler and flags
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -g
+CFLAGS = -Wall -Wextra -Werror -g -I./includes
 
 # Source files
-SRCS = philosophers.c
+SRC_DIR = ./source/
+SRCS = $(addprefix $(SRC_DIR)/, \
+main.c \
+philosophers.c \
+philo_assist.c \
+philo_clean_args.c \
+philo_monitor.c \
+philo_split.c \
+philo_todos.c \
+philo_utils.c)
 
 # Object files
 OBJS = $(SRCS:.c=.o)
