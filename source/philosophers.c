@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:30:10 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/20 01:28:26 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/23 05:06:36 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,8 +42,8 @@ void	one_philo(t_data *data)
 		return ;
 	}
 	print(&data->philo[0], "has taken fork");
-	ft_usleep(data->eat_clock);
-	print(&data->philo[0], "died");
+	printf("%lld %d died\n", (long long)data->death_clock + 1,
+		data->philo->id);
 	data->philo[0].data->count_dead = 1;
 	return ;
 }
@@ -63,7 +63,8 @@ void	*routin(void *args)
 	philo = (t_philo *)args;
 	if ((philo->id + 1) % 2)
 		ft_usleep(philo->data->eat_clock);
-	while (!dying_status(philo->data) && !finishing_status(philo->data))
+	while (!dying_status(philo->data)
+		&& !finishing_status(philo->data) && !scan(philo))
 	{
 		taking_fork(philo);
 		eat_sleep_think(philo);
@@ -86,24 +87,25 @@ FUNC EACH_PHILO
 */
 void	each_philo(t_data *data)
 {
-	int				i;
-	pthread_mutex_t	*array;
+	int	i;
 
-	array = philo_calloc(sizeof(pthread_mutex_t), data->n_philos);
+	data->philo->array = philo_calloc(sizeof(pthread_mutex_t), data->n_philos);
 	i = 0;
 	while (i < data->n_philos)
 	{
 		data->philo[i].id = i + 1;
-		data->philo[i].n_eat = 0;
+		data->philo[i].times_eaten = 0;
 		data->philo[i].data = data;
-		data->philo[i].right_fork = &array[i];
-		pthread_mutex_init(&array[i], NULL);
-		pthread_mutex_init(&data->philo[i].eating_mutex, NULL);
+		data->philo[i].right_fork = &data->philo->array[i];
+		pthread_mutex_init(&data->philo->array[i], NULL);
+		pthread_mutex_init(&(data->philo[i].eating_mutex), NULL);
 		if (i == data->n_philos - 1)
-			data->philo[0].left_fork = &array[i];
+			data->philo[0].left_fork = &data->philo->array[i];
 		else
-			data->philo[i + 1].left_fork = &array[i];
+			data->philo[i + 1].left_fork = &data->philo->array[i];
 		i++;
+		pthread_mutex_init(&data->philo->array[i], NULL);
+		pthread_mutex_init(&data->philo[i].eating_mutex, NULL);
 	}
 }
 
@@ -130,19 +132,23 @@ void	init_philos(t_data *data)
 	each_philo(data);
 	data->start_eating = current_time();
 	i = 0;
-	while (i < data->n_philos)
+	if (data->n_philos == 1)
 	{
-		if (data->n_philos == 1)
+		one_philo(data);
+		return ;
+	}
+	else
+	{
+		while (i < data->n_philos)
 		{
-			one_philo(data);
-			return ;
+			data->philo[i].last_eat = current_time();
+			if (pthread_create(&data->philo[i].tid, NULL, routin,
+					&(data->philo[i])) != 0)
+			{
+				error_return("First thread creation failed");
+				return ;
+			}
+			i++;
 		}
-		data->philo[i].last_eat = current_time();
-		if (pthread_create(&data->philo[i].tid, 0, routin, &(data->philo[i])))
-		{
-			error_return("First thread creation failed");
-			return ;
-		}
-		i++;
 	}
 }

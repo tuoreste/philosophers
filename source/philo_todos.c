@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/19 23:49:17 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/20 01:28:14 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/23 16:43:05 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ size_t	get_current_time(void)
 	struct timeval	time;
 
 	if (gettimeofday(&time, NULL) == -1)
-		write(2, "gettimeofday() error\n", 22);
+		printf("get time of day error");
 	return (time.tv_sec * 1000 + time.tv_usec / 1000);
 }
 
@@ -51,13 +51,13 @@ void	taking_fork(t_philo *philo)
 void	eat_sleep_think(t_philo *philo)
 {
 	print(philo, " is eating");
-	philo->n_eat++;
 	pthread_mutex_lock(&philo->eating_mutex);
+	philo->times_eaten++;
 	philo->last_eat = current_time();
 	pthread_mutex_unlock(&philo->eating_mutex);
-	ft_usleep(philo->data->eat_clock);
 	pthread_mutex_unlock(philo->left_fork);
 	pthread_mutex_unlock(philo->right_fork);
+	ft_usleep(philo->data->eat_clock);
 	print(philo, " is sleeping");
 	ft_usleep(philo->data->sleep_clock);
 	print(philo, " is thinking");

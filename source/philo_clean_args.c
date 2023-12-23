@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/19 23:51:50 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/20 01:27:55 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/20 01:58:14 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,9 +40,8 @@ char	**two_args(char **elems)
 	{
 		while (elems[k] != NULL)
 		{
-			if (!is_valid_number(elems[k - 1]))
+			if (!is_valid_number(elems[k]))
 			{
-				free(elems);
 				error_return("Input contains an invalid character");
 				return (NULL);
 			}
@@ -50,7 +49,6 @@ char	**two_args(char **elems)
 		}
 		if (k < 4 || k > 5)
 		{
-			free(elems);
 			error_return("In number of inputs");
 			return (NULL);
 		}
@@ -69,13 +67,9 @@ char	**five_or_six_args(int argc, char **argv, char **elems)
 	{
 		elems[i - 1] = philo_strdup(argv[i]);
 		if (!elems[i - 1])
-		{
-			free(elems);
 			return (NULL);
-		}
 		if (!is_valid_number(elems[i - 1]))
 		{
-			free(elems);
 			error_return("Input contains an invalid character");
 			return (NULL);
 		}
@@ -96,7 +90,7 @@ char	**clean_args(int argc, char **argv)
 			return (NULL);
 		if (!two_args(elems))
 		{
-			free(elems);
+			free_all(elems);
 			return (NULL);
 		}
 	}
@@ -104,7 +98,10 @@ char	**clean_args(int argc, char **argv)
 	{
 		elems = (char **)philo_calloc(sizeof(char *), argc + 1);
 		if (!five_or_six_args(argc, argv, elems))
+		{
+			free_all(elems);
 			return (NULL);
+		}
 	}
 	else
 		return (NULL);

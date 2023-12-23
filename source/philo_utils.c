@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/27 16:38:36 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/20 01:28:20 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/23 16:32:17 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,15 +50,15 @@ int	end_eating(t_data *data)
 
 	i = 0;
 	n = 0;
-	if (!data->times_eaten)
-	{
+	if (!data->n_eat)
 		return (0);
-	}
 	while (i < data->n_philos)
 	{
 		pthread_mutex_lock(&(data->philo[i].eating_mutex));
-		if (data->philo[i].n_eat >= data->times_eaten)
+		if (data->n_eat <= data->philo[i].times_eaten)
+		{
 			n++;
+		}
 		pthread_mutex_unlock(&(data->philo[i].eating_mutex));
 		i++;
 	}
@@ -70,8 +70,8 @@ int	end_eating(t_data *data)
 void	declare_dead(t_data *data, t_philo *philo)
 {
 	pthread_mutex_lock(&data->one_dead);
-	printf(RED"%lld %d %s\n", current_time() - data->start_eating,
-		philo->id, " died"RESET);
+	printf("%lld %d %s\n", current_time() - philo->data->start_eating,
+		philo->id, " died");
 	data->count_dead = 1;
 	pthread_mutex_unlock(&data->one_dead);
 }

@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/19 23:54:23 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/20 01:28:02 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/23 04:15:10 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,19 +62,19 @@ void	*supervise(void *args)
 		i = 0;
 		while (i < data->n_philos)
 		{
-			pthread_mutex_lock(&data->philo[i].eating_mutex);
-			if ((current_time() - data->philo[i].last_eat) >= data->death_clock)
+			pthread_mutex_lock(&(data->philo[i].eating_mutex));
+			if (current_time() - data->philo[i].last_eat >= data->death_clock)
 			{
 				pthread_mutex_unlock(&data->philo[i].eating_mutex);
 				declare_dead(data, &data->philo[i]);
 				break ;
 			}
 			pthread_mutex_unlock(&data->philo[i++].eating_mutex);
-		}
-		if (end_eating(data))
-		{
-			subvise(data);
-			break ;
+			if (end_eating(data))
+			{
+				subvise(data);
+				break ;
+			}
 		}
 	}
 	return (exiting(data));

@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/19 23:43:36 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/20 01:27:18 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/23 05:03:25 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@ void	mutex_init(t_data *data)
 	pthread_mutex_init(&data->print, NULL);
 	pthread_mutex_init(&data->fini_status, NULL);
 	pthread_mutex_init(&data->one_dead, NULL);
+
 }
 
 void	mutex_destroy_and_free(t_data *data)
@@ -24,6 +25,7 @@ void	mutex_destroy_and_free(t_data *data)
 	pthread_mutex_destroy(&data->print);
 	pthread_mutex_destroy(&data->fini_status);
 	pthread_mutex_destroy(&data->one_dead);
+	free(data->philo->array);
 	free (data->philo);
 	free (data);
 }
@@ -33,8 +35,8 @@ void	*fill(char **elems, t_data *data)
 	data->death_clock = philo_atoi(elems[1]);
 	data->eat_clock = philo_atoi(elems[2]);
 	data->sleep_clock = philo_atoi(elems[3]);
-	data->times_eaten = 0;
-	return(data);
+	data->n_eat = 0;
+	return (data);
 }
 
 /*
@@ -62,19 +64,19 @@ void	lets_go(char **elems)
 		return (free(data));
 	fill(elems, data);
 	if (elems[4])
-		data->times_eaten = philo_atoi(elems[4]);
+		data->n_eat = philo_atoi(elems[4]);
 	mutex_init(data);
 	init_philos(data);
-	if (pthread_create(&data->check, 0, supervise, data) != 0)
+	if (pthread_create(&data->check, NULL, supervise, data) != 0)
 	{
 		error_return("Second thread creation error");
 		mutex_destroy_and_free(data);
 		return ;
 	}
-	pthread_join(data->check, 0);
+	pthread_join(data->check, NULL);
 	i = 0;
 	while (i < data->n_philos)
-		pthread_join(data->philo[i++].tid, 0);
+		pthread_join(data->philo[i++].tid, NULL);
 	mutex_destroy_and_free(data);
 }
 
@@ -100,7 +102,7 @@ int	main(int argc, char **argv)
 		else
 		{
 			lets_go(elems);
-			free(elems);
+			free_all(elems);
 		}
 	}
 	else
