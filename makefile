@@ -6,19 +6,19 @@
 #    By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/08 14:23:29 by otuyishi          #+#    #+#              #
-#    Updated: 2023/12/20 01:22:04 by otuyishi         ###   ########.fr        #
+#    Updated: 2023/12/27 15:58:50 by otuyishi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 # Main Makefile
-NAME = philosophers
+NAME = philo
 
 # Compiler and flags
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -g -I./includes
+CFLAGS = -Wall -Wextra -Werror -g -I./includes -fsanitize=thread
 
 # Source files
-SRC_DIR = ./source/
+SRC_DIR = source
 SRCS = $(addprefix $(SRC_DIR)/, \
 main.c \
 philosophers.c \

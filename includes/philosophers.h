@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/08 14:27:26 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/22 22:42:07 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/20 02:07:13 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,9 +32,8 @@ typedef struct s_philo
 	long long		last_eat;
 	int				time;
 	int				id;
-	int				eating_rounds;
+	int				n_eat;
 	int				back;
-	int				times_eaten;
 	struct s_data	*data;
 	pthread_mutex_t	*left_fork;
 	pthread_mutex_t	*right_fork;
@@ -50,13 +49,13 @@ typedef struct s_data
 	pthread_mutex_t	one_dead;
 	long long		start_eating;
 	long long		end_eating;
-	int				n_eat;
 	int				n_philos;
 	int				count_dead;
 	int				one_finished;
 	int				death_clock;
 	int				eat_clock;
 	int				sleep_clock;
+	int				times_eaten;
 	struct s_philo	*philo;
 }					t_data;
 
@@ -101,6 +100,5 @@ void				*philo_calloc(size_t count, size_t size);
 int					ft_usleep(size_t milliseconds);
 size_t				get_current_time(void);
 void				ft_bzero(void *s, size_t n);
-int					scan(t_philo *philo);
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: otuyishi <otuyishi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/19 23:43:36 by otuyishi          #+#    #+#             */
-/*   Updated: 2023/12/23 05:03:25 by otuyishi         ###   ########.fr       */
+/*   Updated: 2023/12/20 04:06:08 by otuyishi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@ void	mutex_init(t_data *data)
 	pthread_mutex_init(&data->print, NULL);
 	pthread_mutex_init(&data->fini_status, NULL);
 	pthread_mutex_init(&data->one_dead, NULL);
-
 }
 
 void	mutex_destroy_and_free(t_data *data)
@@ -35,7 +34,7 @@ void	*fill(char **elems, t_data *data)
 	data->death_clock = philo_atoi(elems[1]);
 	data->eat_clock = philo_atoi(elems[2]);
 	data->sleep_clock = philo_atoi(elems[3]);
-	data->n_eat = 0;
+	data->times_eaten = 0;
 	return (data);
 }
 
@@ -64,19 +63,19 @@ void	lets_go(char **elems)
 		return (free(data));
 	fill(elems, data);
 	if (elems[4])
-		data->n_eat = philo_atoi(elems[4]);
+		data->times_eaten = philo_atoi(elems[4]);
 	mutex_init(data);
 	init_philos(data);
-	if (pthread_create(&data->check, NULL, supervise, data) != 0)
+	if (pthread_create(&data->check, 0, supervise, data) != 0)
 	{
 		error_return("Second thread creation error");
 		mutex_destroy_and_free(data);
 		return ;
 	}
-	pthread_join(data->check, NULL);
+	pthread_join(data->check, 0);
 	i = 0;
 	while (i < data->n_philos)
-		pthread_join(data->philo[i++].tid, NULL);
+		pthread_join(data->philo[i++].tid, 0);
 	mutex_destroy_and_free(data);
 }
 
